@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+*.bak
+*.egg-info/
+dist/
+build/
+.idea/
+.vscode/
+*.secret
+*.pem
+*.key
+.DS_Store
+Thumbs.db
