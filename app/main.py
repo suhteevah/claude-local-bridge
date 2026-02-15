@@ -14,6 +14,7 @@ import sys
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.middleware.auth import set_token
@@ -38,6 +39,12 @@ def create_app(config: BridgeConfig) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+    )
+
+    # Accept all host headers (needed for Tailscale Serve HTTPS proxy)
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["*"],
     )
 
     # ── Services ──────────────────────────────────────────────────────────
@@ -77,6 +84,11 @@ def create_app(config: BridgeConfig) -> FastAPI:
 
         # Mount the MCP SSE app as a sub-application
         mcp_app = mcp_server.sse_app()
+
+        # Allow all host headers on MCP sub-app (for Tailscale Serve proxy)
+        from starlette.middleware.trustedhost import TrustedHostMiddleware as StarletteTH
+        mcp_app.add_middleware(StarletteTH, allowed_hosts=["*"])
+
         app.mount("/mcp", mcp_app)
 
     except ImportError as e:
@@ -150,10 +162,10 @@ def main():
             f"  Token:      [bold yellow]{config.token}[/bold yellow]\n\n"
             f"[dim]Add this MCP config to your claude_desktop_config.json:[/dim]\n"
             f'[dim]{{"mcpServers": {{"local-bridge": {{"url": "{mcp_url}"}}}}}}[/dim]',
-            title="🔗 Bridge Ready",
+            title="<< Bridge Ready >>",
             border_style="blue",
         ))
-    except ImportError:
+    except (ImportError, UnicodeEncodeError):
         print(f"\n=== Claude Local Bridge ===")
         print(f"  HTTP API:  http://{config.host}:{config.port}")
         print(f"  MCP (SSE): {mcp_url}")

@@ -15,6 +15,7 @@ import logging
 from typing import Any, Optional
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from app.models.schemas import (
     AccessLevel,
@@ -40,6 +41,12 @@ mcp = FastMCP(
         "the workspace owner first. Always request approval before reading or "
         "writing. Approvals are scoped: file, directory, or directory_shallow. "
         "Check existing approvals before making redundant requests."
+    ),
+    # Disable DNS rebinding protection — Tailscale handles network security.
+    # This allows the Tailscale Serve HTTPS proxy to forward requests with
+    # its own Host header (kokonoe.tailb85819.ts.net) without being rejected.
+    transport_security=TransportSecuritySettings(
+        enable_dns_rebinding_protection=False,
     ),
 )
 
