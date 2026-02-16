@@ -145,3 +145,7 @@ class BridgeConfig(BaseModel):
     denied_extensions: list[str] = Field(
         default_factory=lambda: [".env", ".pem", ".key", ".p12", ".pfx", ".secret"]
     )
+    public_url: str = Field(
+        "",
+        description="Public HTTPS URL (e.g. Tailscale Funnel) for OAuth discovery",
+    )

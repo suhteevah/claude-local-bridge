@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.auth.oauth import router as oauth_router, init as oauth_init
 from app.middleware.auth import set_token
 from app.models.schemas import BridgeConfig
 from app.routers import approvals, audit, files, ws
@@ -70,6 +71,11 @@ def create_app(config: BridgeConfig) -> FastAPI:
     app.include_router(approvals.router)
     app.include_router(audit.router)
     app.include_router(ws.router)
+
+    # ── OAuth 2.1 for Claude.ai / Claude iOS connectors ───────────────
+    if config.public_url:
+        oauth_init(config.public_url)
+        app.include_router(oauth_router)
 
     # ── MCP Server (mounted on /mcp) ────────────────────────────────────
     try:
@@ -130,6 +136,11 @@ def parse_args() -> BridgeConfig:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=9120)
     parser.add_argument("--max-file-size-mb", type=int, default=10)
+    parser.add_argument(
+        "--public-url",
+        default="",
+        help="Public HTTPS URL for OAuth (e.g. https://kokonoe.tailb85819.ts.net)",
+    )
     args = parser.parse_args()
 
     return BridgeConfig(
@@ -137,6 +148,7 @@ def parse_args() -> BridgeConfig:
         host=args.host,
         port=args.port,
         max_file_size_mb=args.max_file_size_mb,
+        public_url=args.public_url,
     )
 
 
